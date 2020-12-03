@@ -2,12 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Box from '@material-ui/core/Box'
 import { makeStyles } from '@material-ui/styles'
-
-const URGENCY = {
-  1: 'Low',
-  2: 'Medium',
-  3: 'High'
-}
+import { useTranslation } from 'react-i18next'
 
 const useStyles = makeStyles(() => ({
   popup: {},
@@ -23,64 +18,64 @@ const useStyles = makeStyles(() => ({
 }))
 
 // TODO: Improve styles and add a Link using the id to navigate to the detail screen of the SPONSOR | LIFE_BANK.
-function MapPopup({ id, info, account }) {
+function MapPopup({ id, info }) {
+  const { t } = useTranslation('translations')
   const classes = useStyles()
+
+  var isMobile = {
+    platform: function () {
+      return navigator.platform.match(
+        /Android|Linux|iPhone|iPod|iPad|iPhone Simulator|iPod Simulator|iPad Simulator|Pike v7.6 release 92|Pike v7.8 release 517/i
+      )
+    }
+  }
+
+  const goto = () => {
+    if (navigator.userAgent.match(/iPhone|iPad|iPod/i) && isMobile.platform()) {
+      return `maps:0,0?q=${info.geolocation.latitude},${info.geolocation.longitude}`
+    } else if (
+      navigator.userAgent.match(/Android|BlackBerry|Opera Mini/i) &&
+      isMobile.platform()
+    ) {
+      return `geo:0,0?q=${info.geolocation.latitude},${info.geolocation.longitude}`
+    } else {
+      return `https://maps.google.com/maps?q=${info.geolocation.latitude},${info.geolocation.longitude}`
+    }
+  }
 
   return (
     <Box key={id}>
       <div className={classes.title}>{info.name}</div>
       <div>
-        Account:{' '}
+        {t('common.telephone')}:
         <a
-          href={`https://jungle.bloks.io/account/${account}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={classes.link}
-        >
-          {account}
-        </a>
-      </div>
-      <div>
-        Phone:{' '}
-        <a
-          href={`tel:${info.telephone || info.phone_number}`}
+          href={`tel: ${info.telephone || info.phone_number} `}
           className={classes.link}
         >
           {info.telephone || info.phone_number}
         </a>
       </div>
-      {info.bussines_type && <div>Business type: {info.bussines_type}</div>}
-      {info.benefit_description && (
-        <div>Benefits: {info.benefit_description}</div>
-      )}
-      {info.description && <div>Description: {info.description}</div>}
-      {info.description && (
-        <div>Blood urgency: {URGENCY[info.blood_urgency_level]}</div>
-      )}
-      {info.website && (
-        <div>
-          Website:{' '}
-          <a
-            href={info.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={classes.link}
-          >
-            {info.website}
-          </a>
-        </div>
-      )}
       <div>
-        Schedule:
-        <ul className={classes.ul}>
-          {JSON.parse((info.schedule || '[]').replace(/\\/g, '')).map(
-            (item, i) => (
-              <li key={`${i}-${item.day}`}>
-                {item.day}: {item.open} - {item.close}
-              </li>
-            )
-          )}
-        </ul>
+        {t('common.website')}:
+        <a
+          href={window.location.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={classes.link}
+        >
+          {t('miscellaneous.openSite')}
+        </a>
+      </div>
+      <div>
+        {t('profile.location')}:
+        <a
+          className={classes.link}
+          href={goto()}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t('miscellaneous.goTo')}
+        </a>
       </div>
     </Box>
   )
@@ -88,8 +83,7 @@ function MapPopup({ id, info, account }) {
 
 MapPopup.propTypes = {
   id: PropTypes.number.isRequired,
-  info: PropTypes.object.isRequired,
-  account: PropTypes.string.isRequired
+  info: PropTypes.object.isRequired
 }
 
 export default MapPopup

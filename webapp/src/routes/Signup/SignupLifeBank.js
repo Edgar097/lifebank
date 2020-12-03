@@ -10,6 +10,7 @@ import FormGroup from '@material-ui/core/FormGroup'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Switch from '@material-ui/core/Switch'
 import ReCAPTCHA from 'react-google-recaptcha'
+import { useTranslation } from 'react-i18next'
 
 import MapSelectLocation from '../../components/MapSelectLocation'
 import Schedule from '../../components/Schedule'
@@ -44,12 +45,13 @@ const SignupLifeBank = ({
   setField,
   user,
   loading,
-  isUsernameValid,
+  isEmailValid,
   children
 }) => {
+  const { t } = useTranslation('translations')
   const classes = useStyles()
   const handleOnGeolocationChange = useCallback(
-    (geolocation) => setField('geolocation', geolocation),
+    (coordinates) => setField('coordinates', JSON.stringify(coordinates)),
     [setField]
   )
   const handleOnAddSchedule = useCallback(
@@ -75,11 +77,11 @@ const SignupLifeBank = ({
   const valueLabelFormat = (value) => {
     switch (value) {
       case 1:
-        return 'Low'
+        return t('editProfile.low')
       case 2:
-        return 'Medium'
+        return t('editProfile.medium')
       case 3:
-        return 'High'
+        return t('editProfile.high')
       default:
         return 'N/A'
     }
@@ -90,37 +92,23 @@ const SignupLifeBank = ({
       <div className={classes.formGroup}>{children}</div>
       <div className={classes.formGroup}>
         <TextField
-          id="secret"
-          label="Secret"
+          id="password"
+          label={t('signup.password')}
           type="password"
           fullWidth
-          placeholder="Your Secret"
+          placeholder={t('signup.passwordPlaceholder')}
           variant="outlined"
           InputLabelProps={{
             shrink: true
           }}
-          onChange={(event) => setField('secret', event.target.value)}
-        />
-      </div>
-      <div className={classes.formGroup}>
-        <TextField
-          id="email"
-          label="Email"
-          variant="outlined"
-          placeholder="Your Email"
-          fullWidth
-          InputLabelProps={{
-            shrink: true
-          }}
-          className={classes.textField}
-          onChange={(event) => setField('email', event.target.value)}
+          onChange={(event) => setField('password', event.target.value)}
         />
       </div>
       <div className={classes.formGroup}>
         <TextField
           id="name"
-          label="Name"
-          placeholder="Name"
+          label={t('signup.name')}
+          placeholder={t('signup.namePlaceholder')}
           variant="outlined"
           fullWidth
           InputLabelProps={{
@@ -133,8 +121,8 @@ const SignupLifeBank = ({
       <div className={classes.formGroup}>
         <TextField
           id="description"
-          label="Description"
-          placeholder="Description"
+          label={t('common.description')}
+          placeholder={t('signup.descriptionPlaceholder')}
           variant="outlined"
           fullWidth
           InputLabelProps={{
@@ -147,8 +135,8 @@ const SignupLifeBank = ({
       <div className={classes.formGroup}>
         <TextField
           id="address"
-          label="Address"
-          placeholder="Address"
+          label={t('signup.address')}
+          placeholder={t('signup.addressPlaceholder')}
           variant="outlined"
           fullWidth
           InputLabelProps={{
@@ -161,15 +149,29 @@ const SignupLifeBank = ({
       <div className={classes.formGroup}>
         <TextField
           id="phoneNumber"
-          label="Phone Number"
-          placeholder="Phone Number"
+          label={t('signup.phoneNumber')}
+          placeholder={t('signup.phoneNumberPlaceholder')}
           variant="outlined"
           fullWidth
           InputLabelProps={{
             shrink: true
           }}
           className={classes.textField}
-          onChange={(event) => setField('phone_number', event.target.value)}
+          onChange={(event) => setField('phone', event.target.value)}
+        />
+      </div>
+      <div className={classes.formGroup}>
+        <TextField
+          id="invitationCode"
+          label={t('signup.invitationCode')}
+          placeholder={t('signup.invitationCodePlaceholder')}
+          variant="outlined"
+          fullWidth
+          InputLabelProps={{
+            shrink: true
+          }}
+          className={classes.textField}
+          onChange={(event) => setField('invitation_code', event.target.value)}
         />
       </div>
       <FormGroup className={classes.formGroup}>
@@ -179,21 +181,19 @@ const SignupLifeBank = ({
               id="hasImmunityTest"
               name="hasImmunityTest"
               color="primary"
-              checked={user.has_immunity_test || false}
-              onChange={(event) =>
-                setField('has_immunity_test', !user.has_immunity_test)
-              }
+              checked={user.immunity_test || false}
+              onChange={() => setField('immunity_test', !user.immunity_test)}
             />
           }
-          label="Has immunity test?"
+          label={t('profile.hasImmunityTest')}
         />
       </FormGroup>
       <div className={classes.formGroup}>
-        <Typography gutterBottom>Blood urgency level</Typography>
+        <Typography gutterBottom>{t('common.bloodUrgency')}</Typography>
         <Slider
           valueLabelDisplay="auto"
           valueLabelFormat={valueLabelFormat}
-          onChange={(event, value) => setField('blood_urgency_level', value)}
+          onChange={(event, value) => setField('urgency_level', value)}
           marks={marks}
           step={null}
           min={0}
@@ -205,7 +205,7 @@ const SignupLifeBank = ({
       </div>
       <div className={classes.formGroup}>
         <Typography variant="subtitle2" gutterBottom>
-          Choose your location
+          {t('signup.chooseYourLocation')}
         </Typography>
         <MapSelectLocation
           onGeolocationChange={handleOnGeolocationChange}
@@ -224,15 +224,13 @@ const SignupLifeBank = ({
       <div className={classes.btnWrapper}>
         <Button
           disabled={
-            !user.secret ||
+            !isEmailValid ||
+            !user.password ||
             !user.name ||
-            !user.description ||
             !user.address ||
-            !user.phone_number ||
-            !user.blood_urgency_level ||
+            !user.phone ||
             !user.schedule ||
-            !isUsernameValid ||
-            !user.geolocation ||
+            !user.coordinates ||
             !recaptchaValue ||
             loading
           }
@@ -240,7 +238,7 @@ const SignupLifeBank = ({
           color="primary"
           onClick={onSubmit}
         >
-          Continue
+          {t('miscellaneous.continue')}
         </Button>
         {loading && <CircularProgress />}
       </div>
@@ -253,7 +251,7 @@ SignupLifeBank.propTypes = {
   setField: PropTypes.func,
   user: PropTypes.object,
   loading: PropTypes.bool,
-  isUsernameValid: PropTypes.bool,
+  isEmailValid: PropTypes.bool,
   children: PropTypes.node
 }
 

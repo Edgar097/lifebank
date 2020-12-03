@@ -8,6 +8,7 @@ import Snackbar from '@material-ui/core/Snackbar'
 import { Alert, AlertTitle } from '@material-ui/lab'
 import Link from '@material-ui/core/Link'
 import { useHistory } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import {
   PROFILE_QUERY,
@@ -16,16 +17,17 @@ import {
   NOTIFICATION_SUBSCRIPTION
 } from '../../gql'
 import { useUser } from '../../context/user.context'
-
 import ProfilePageDonor from './ProfilePageDonor'
 import ProfilePageGuest from './ProfilePageGuest'
 import ProfilePageLifebank from './ProfilePageLifebank'
 import ProfilePageSponsor from './ProfilePageSponsor'
+import { eosConfig } from '../../config'
 
 const useStyles = makeStyles((theme) => ({
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
+    height: 'auto',
     width: '100%',
     padding: theme.spacing(6, 1, 0, 1),
     alignItems: 'center'
@@ -57,6 +59,7 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const ProfilePage = () => {
+  const { t } = useTranslation('translations')
   const classes = useStyles()
   const history = useHistory()
   const [snackbarState, setSnackbarState] = useState({})
@@ -115,9 +118,9 @@ const ProfilePage = () => {
       title: `Success ${lastConsentChange} consent`,
       description: (
         <>
-          Transaction{' '}
+          Transaction
           <Link
-            href={`https://jungle.bloks.io/transaction/${
+            href={`${eosConfig.BLOCK_EXPLORER_URL}transaction/${
               lastConsentChange === 'grant'
                 ? grantConsentResult.transaction_id
                 : revokeConsentResult.transaction_id
@@ -188,7 +191,7 @@ const ProfilePage = () => {
         </Alert>
       </Snackbar>
       <Typography variant="h1" className={classes.title}>
-        My Profile
+        {t('profile.myProfile')}
       </Typography>
       {loading && <CircularProgress />}
       {!loading && currentUser && profile?.role === 'donor' && (

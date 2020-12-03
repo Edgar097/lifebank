@@ -66,7 +66,6 @@ public:
    */
   ACTION link(eosio::asset community_asset, eosio::name new_user);
 
-
   /**
    *
    *  Saves the info related with a donor within a community
@@ -79,29 +78,43 @@ public:
    */
   ACTION adddonor(eosio::name account, eosio::asset community_asset);
 
-
   /**
    *
    *  Saves the info related with a lifebank within a community
    *
    * @param account - The user account name,
    * @param lifebank_name - The name of the life bank
-   * @param description - Life bank's description
+   * @param about - Life bank's about
    * @param address - Life bank's address
    * @param location - Life banks's location latitud,logitud
-   * @param phone_number - Life banks' phone_number
+   * @param telephones - Life banks' phone_number
    * @param has_immunity_test - TODO:
    * @param blood_urgency_level - TODO:
    * @param schedule - Life banks's schedule
    * @param community_asset - Symbol ex: 1 SYS , 1 BLOOD
    * @param email - Life bank's email
-   *
+   * @param photos - Life bank's photos
+   * @param logo_url - Life bank's logo
+   * @param social_media_links - Life bank's social media links
    * @pre community's symbol must exits
    *
+   *
    */
-  ACTION addlifebank(eosio::name account, string lifebank_name,
-                     string description, string address, string location, string phone_number,
-                     bool has_immunity_test, uint8_t blood_urgency_level, string schedule, eosio::asset community_asset, string email);
+  ACTION addlifebank(
+      eosio::name account,
+      string lifebank_name,
+      string about,
+      string address,
+      string location,
+      string telephones,
+      bool has_immunity_test,
+      uint8_t blood_urgency_level,
+      string schedule,
+      eosio::asset community_asset,
+      string email,
+      string photos,
+      string logo_url,
+      string social_media_links);
 
   /**
    *
@@ -109,22 +122,37 @@ public:
    *
    * @param account - The user account name,
    * @param lifebank_name - The name of the life bank
-   * @param description - Life bank's description
+   * @param about - Life bank's about
    * @param address - Life bank's address
    * @param location - Life banks's location latitud,logitud
-   * @param phone_number - Life banks' phone_number
+   * @param telephones - Life banks' phone_number
    * @param has_immunity_test - TODO:
    * @param blood_urgency_level - TODO:
    * @param schedule - Life banks's schedule
    * @param community_asset - Symbol ex: 1 SYS , 1 BLOOD
    * @param email - Life bank's email
+   * @param photos - Life bank's photos
+   * @param logo_url - Life bank's logo
+   * @param social_media_links - Life bank's social media links
    *
    * @pre community's symbol must exits
    *
    */
-  ACTION uplifebank(eosio::name account, string lifebank_name,
-                    string description, string address, string location, string phone_number,
-                    bool has_immunity_test, uint8_t blood_urgency_level, string schedule, eosio::asset community_asset, string email);
+  ACTION uplifebank(
+      eosio::name account,
+      string lifebank_name,
+      string about,
+      string address,
+      string location,
+      string telephones,
+      bool has_immunity_test,
+      uint8_t blood_urgency_level,
+      string schedule,
+      eosio::asset community_asset,
+      string email,
+      string photos,
+      string logo_url,
+      string social_media_links);
 
   /**
    *
@@ -132,21 +160,41 @@ public:
    *
    * @param account - The user account name,
    * @param sponsor_name - The name of sponsor
-   * @param covid_impact - TODO:
-   * @param benefit_description - TODO:
+   * @param covid_impact - covid impact
+   * @param benefit_description - Sponsor benefit description
    * @param website - Sponsor's website
-   * @param telephone - Sponsor's phone_number
-   * @param bussines_type - TODO:
+   * @param telephones - Sponsor's phone_numbers
+   * @param business_type - Sponsor business_type
    * @param schedule - Sponsor's schedule
    * @param email - Sponsor's email
    * @param community_asset - Symbol ex: 1 SYS , 1 BLOOD
    * @param location - Sponsor's location:
-   *
+   * @param address - Sponsor address
+   * @param logo_url - Sponsor logo
+   * @param about - Sponsor about
+   * @param social_media_links - Sponsor social media links
+   * @param photos - Sponsor photos
    * @pre community's symbol must exits
    *
    */
-  ACTION addsponsor(eosio::name account, string sponsor_name, string covid_impact, string benefit_description,
-                    string website, string telephone, string bussines_type, string schedule, string email, eosio::asset community_asset, string location);
+  ACTION addsponsor(
+      eosio::name account,
+      string sponsor_name,
+      string covid_impact,
+      string benefit_description,
+      string website,
+      string telephones,
+      string business_type,
+      string schedule,
+      string email,
+      eosio::asset community_asset,
+      string location,
+      string address,
+      string logo_url,
+      string about,
+      string social_media_links,
+      string photos);
+
 
     /**
    *
@@ -157,7 +205,11 @@ public:
    * @param description - TODO: add remainig parameters to match atttributes for offer.
    */
 
-  ACTION addoffer(eosio::name sponsor, uint8_t cost, string description);
+  ACTION addoffer(
+        eosio::name offer,
+        eosio::name sponsor, 
+        uint8_t cost, 
+        string description);
 
   /**
    *
@@ -211,7 +263,7 @@ private:
     create_new_token.send(issuer, maximum_supply);
   }
 
-   /**
+  /**
    *
    *  Verify is an account has consent
    *
@@ -241,7 +293,6 @@ private:
    */
   bool is_sponsor(name account);
 
-
   /**
    *
    *  Verify is an account is a lifebank
@@ -252,7 +303,7 @@ private:
    */
   bool is_lifebank(name account);
 
-   /**
+  /**
    *
    *  TODO:
    *
@@ -334,7 +385,6 @@ private:
   };
   typedef multi_index<name("lifebanks"), lifebank> lifebanks_table;
 
-
   /*
   *
   *  Table to store data realted with sponsors
@@ -358,13 +408,13 @@ constexpr eosio::name consent_account{"consent2life"_n};
   */
   TABLE offers
   {
-    uint64_t id;
+    eosio::name offer;
     eosio::name sponsor;
     uint8_t cost;
     checksum256 tx;
-    auto primary_key() const { return id; }
+    auto primary_key() const { return offer.value; }
     EOSLIB_SERIALIZE(offers,
-                    (sponsor)(cost)(tx));
+                    (offer)(sponsor)(cost)(tx));
   };
   typedef multi_index<name("offers"), offers> offers_table;
 
@@ -406,7 +456,7 @@ typedef eosio::multi_index<eosio::name("userconsents"), informed_consent,
                            indexed_by<eosio::name("byhash"), const_mem_fun<informed_consent, checksum256, &informed_consent::get_hash>>>
     informed_consents_table;
 
- /**
+/**
   *
   *  Uility function for format a string to hash format
   *
@@ -419,7 +469,7 @@ checksum256 string_to_hash(const string &input)
   return sha256(input.c_str(), input.size());
 }
 
- /**
+/**
   *
   *  Verify if a account has  a consent
   *

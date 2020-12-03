@@ -1,19 +1,21 @@
 import React, { useEffect, useCallback, useState } from 'react'
 import { useLazyQuery, useMutation } from '@apollo/react-hooks'
-import { Link } from 'react-router-dom'
+import { Alert, AlertTitle } from '@material-ui/lab'
+import { Link, useLocation } from 'react-router-dom'
 import { makeStyles } from '@material-ui/styles'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
-import { Alert, AlertTitle } from '@material-ui/lab'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import CloseIcon from '@material-ui/icons/Close'
+import { useTranslation } from 'react-i18next'
 
 import {
   PROFILE_QUERY,
   GRANT_CONSENT_MUTATION,
   REVOKE_CONSENT_MUTATION,
-  EDIT_PROFILE_MUTATION
+  EDIT_PROFILE_MUTATION,
+  SET_USERNAME
 } from '../../gql'
 import { useUser } from '../../context/user.context'
 
@@ -65,13 +67,18 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const EditProfilePage = () => {
+  const { t } = useTranslation('translations')
   const classes = useStyles()
+  const location = useLocation()
   const [currentUser] = useUser()
   const [showAlert, setShowAlert] = useState({ error: false, success: false })
+  const [isCompleting, setIsCompleting] = useState()
+  const [userName, setuserName] = useState()
   const [
     loadProfile,
     { loading, data: { profile: { profile } = {} } = {} }
   ] = useLazyQuery(PROFILE_QUERY, { fetchPolicy: 'network-only' })
+
   const [
     revokeConsent,
     {
@@ -79,6 +86,7 @@ const EditProfilePage = () => {
       data: { revoke_consent: revokeConsentResult } = {}
     }
   ] = useMutation(REVOKE_CONSENT_MUTATION)
+
   const [
     grantConsent,
     {
@@ -92,17 +100,29 @@ const EditProfilePage = () => {
     { loading: editLoading, data: { edit_profile: editProfileResult } = {} }
   ] = useMutation(EDIT_PROFILE_MUTATION)
 
+  const [
+    setUsername
+  ] = useMutation(SET_USERNAME)
+
   const handleConsentChange = () => {
     profile?.consent ? revokeConsent() : grantConsent()
   }
 
   const handleUpdateUser = useCallback(
-    (userEdited) => {
+    (userEdited, userNameEdited, account) => {
       editProfile({
         variables: {
           profile: userEdited
         }
       })
+      if (account && userNameEdited) {
+        setUsername({
+          variables: {
+            account: account,
+            username: userNameEdited
+          }
+        })
+      }
     },
     [editProfile]
   )
@@ -134,6 +154,13 @@ const EditProfilePage = () => {
     }
   }, [editProfileResult, loadProfile])
 
+  useEffect(() => {
+    location.state
+      ? setIsCompleting(location.state.isCompleting)
+      : setIsCompleting(false)
+    setuserName(location.state.userName)
+  }, [location])
+
   return (
     <Box className={classes.wrapper}>
       <Box className={classes.boxMessage}>
@@ -151,10 +178,10 @@ const EditProfilePage = () => {
               </IconButton>
             }
           >
-            <AlertTitle>Error</AlertTitle>
-            During save profile data -
+            <AlertTitle>{t('editProfile.error')}</AlertTitle>
+            {t('editProfile.duringSaveProfileData')}
             <Link to="/profile" className={classes.linkError}>
-              <strong> Go to profile!</strong>
+              <strong>{t('donations.goToProfile')}</strong>
             </Link>
           </Alert>
         )}
@@ -172,16 +199,16 @@ const EditProfilePage = () => {
               </IconButton>
             }
           >
-            <AlertTitle>Success</AlertTitle>
-            Profile was updated —
+            <AlertTitle>{t('editProfile.success')}</AlertTitle>
+            {t('editProfile.profileWasUpdated')}
             <Link to="/profile" className={classes.linkSuccess}>
-              <strong> Go to profile!</strong>
+              <strong>{t('editProfile.goToProfile')}</strong>
             </Link>
           </Alert>
         )}
       </Box>
       <Typography variant="h1" className={classes.title}>
-        Edit Profile
+        {t('editProfile.editProfile')}
       </Typography>
       {loading && <CircularProgress />}
       {!loading && currentUser && profile?.role === 'donor' && (
@@ -195,6 +222,7 @@ const EditProfilePage = () => {
       {!loading && currentUser && profile?.role === 'sponsor' && (
         <EditProfileSponsor
           profile={profile}
+          isCompleting={isCompleting}
           onSubmit={handleUpdateUser}
           loading={editLoading}
         />
@@ -202,6 +230,8 @@ const EditProfilePage = () => {
       {!loading && currentUser && profile?.role === 'lifebank' && (
         <EditProfileBank
           profile={profile}
+          userName={userName}
+          isCompleting={isCompleting}
           onSubmit={handleUpdateUser}
           loading={editLoading}
         />

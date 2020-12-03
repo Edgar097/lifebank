@@ -11,6 +11,12 @@ actions:
     handler: http://hapi:9090/api/accounts
   permissions:
   - role: guest
+- name: create_pre_register_lifebank
+  definition:
+    kind: synchronous
+    handler: http://hapi:9090/api/pre-register
+  permissions:
+  - role: guest
 - name: credentials_recovery
   definition:
     kind: synchronous
@@ -30,6 +36,15 @@ actions:
   definition:
     kind: ""
     handler: http://hapi:9090/api/get-contract
+  permissions:
+  - role: donor
+  - role: guest
+  - role: lifebank
+  - role: sponsor
+- name: get_valid_sponsors
+  definition:
+    kind: ""
+    handler: http://hapi:9090/api/get-valid-sponsors
   permissions:
   - role: donor
   - role: guest
@@ -86,6 +101,15 @@ actions:
   - role: donor
   - role: lifebank
   - role: sponsor
+- name: verify_email
+  definition:
+    kind: synchronous
+    handler: http://hapi:9090/api/verify-email
+  permissions:
+  - role: donor
+  - role: guest
+  - role: lifebank
+  - role: sponsor
 custom_types:
   enums: []
   input_objects: []
@@ -102,4 +126,7 @@ custom_types:
   - name: transfer_output
   - name: edit_profile_output
   - name: get_contract_output
+  - name: create_pre_register_lifebank_output
+  - name: verify_email_output
+  - name: ValidSponsor
   scalars: []

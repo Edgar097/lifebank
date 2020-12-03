@@ -243,8 +243,10 @@ ACTION lifebankcode::addsponsor(
 }
 
 ACTION lifebankcode::addoffer(
+    eosio::name offer,
     eosio::name sponsor,
-    uint8_t cost)
+    uint8_t cost,
+    string description)
   {
     require_auth(sponsor);
     check_consent(sponsor);

@@ -1,33 +1,55 @@
+const { eosConfig } = require('../config')
 const {
   eosUtils,
   jwtUtils,
   consent2lifeUtils,
   lifebankcodeUtils,
-  lifebankcoinUtils
+  lifebankcoinUtils,
+  hasuraUtils
 } = require('../utils')
 
 const historyApi = require('./history.api')
 const notificationApi = require('./notification.api')
 const userApi = require('./user.api')
 const vaultApi = require('./vault.api')
-const LIFEBANCKCODE_CONTRACT = 'lifebankcode' // @todo: use ENV
+const preRegLifebank = require('./pre-register.api')
+const verificationCodeApi = require('./verification-code.api')
+const mailApi = require('../utils/mail')
+const LIFEBANKCODE_CONTRACT = eosConfig.lifebankCodeContractName
 
-const create = async ({ role, username, secret }) => {
-  const account = `${role.substring(0, 3)}${username}`.substring(0, 12)
+const GET_SPONSORS_ACCOUNTS = `
+query MyQuery {
+  user(where: {account: {_ilike: "spo%"}}) {
+    account
+  }
+}
+`
+
+const create = async ({ role, email, name, secret }) => {
+  const account = await eosUtils.generateRandomAccountName(role.substring(0, 3))
   const { password, transaction } = await eosUtils.createAccount(account)
+  const username = account
   const token = jwtUtils.create({ role, username, account })
+  const { verification_code } = await verificationCodeApi.generate()
 
   await userApi.insert({
     role,
     username,
     account,
-    secret
+    email,
+    secret,
+    name,
+    verification_code
   })
+
   await vaultApi.insert({
     account,
     password
   })
+
   await historyApi.insert(transaction)
+
+  mailApi.sendVerificationCode(email, verification_code)
 
   return {
     account,
@@ -60,6 +82,7 @@ const getProfile = async account => {
   return {
     account,
     role: user.role,
+    id: user.id,
     ...data
   }
 }
@@ -76,7 +99,7 @@ const getDonorData = async account => {
   }
 
   const consent = await consent2lifeUtils.getConsent(
-    LIFEBANCKCODE_CONTRACT,
+    LIFEBANKCODE_CONTRACT,
     account
   )
   const balance = await lifebankcoinUtils.getbalance(account)
@@ -97,15 +120,55 @@ const getLifebankData = async account => {
   const { tx } = (await lifebankcodeUtils.getLifebank(account)) || {}
   const { lifebank_name: name, ...profile } = await getTransactionData(tx)
   const consent = await consent2lifeUtils.getConsent(
-    LIFEBANCKCODE_CONTRACT,
+    LIFEBANKCODE_CONTRACT,
     account
   )
-
   return {
     ...profile,
     name,
     consent: !!consent
   }
+}
+
+const getSponsorsAccounts = async () => {
+  const { user } = await hasuraUtils.request(GET_SPONSORS_ACCOUNTS)
+
+  return user
+}
+
+const getValidSponsors = async () => {
+  const sponsorsAccounts = await getSponsorsAccounts()
+  const validSponsors = []
+  for (let index = 0; index < sponsorsAccounts.length; index++) {
+    const { tx } =
+      (await lifebankcodeUtils.getSponsor(sponsorsAccounts[index].account)) ||
+      {}
+    if (tx) {
+      const { ...profile } = await getTransactionData(tx)
+      if (
+        profile.sponsor_name.length > 0 &&
+        profile.schedule.length > 0 &&
+        profile.address.length > 0 &&
+        profile.logo_url.length > 0 &&
+        profile.email.length > 0 &&
+        profile.location !== 'null' &&
+        profile.social_media_links.length > 0 &&
+        JSON.parse(profile.telephones).length > 0
+      )
+        validSponsors.push({
+          name: profile.sponsor_name,
+          openingHours: profile.schedule,
+          address: profile.address,
+          logo: profile.logo_url,
+          email: profile.email,
+          location: profile.location,
+          telephone: JSON.parse(profile.telephones)[0],
+          social_media_links: profile.social_media_links
+        })
+    }
+  }
+
+  return validSponsors
 }
 
 const getSponsorData = async account => {
@@ -122,7 +185,7 @@ const getSponsorData = async account => {
   }
 
   const consent = await consent2lifeUtils.getConsent(
-    LIFEBANCKCODE_CONTRACT,
+    LIFEBANKCODE_CONTRACT,
     account
   )
   const balance = await lifebankcoinUtils.getbalance(account)
@@ -141,7 +204,6 @@ const getTransactionData = async tx => {
     (await historyApi.getOne({
       transaction_id: { _eq: tx || '' }
     })) || {}
-
   return actionTraces.reduce(
     (result, item) => ({ ...result, ...item.act.data }),
     {}
@@ -151,7 +213,7 @@ const getTransactionData = async tx => {
 const grantConsent = async account => {
   const password = await vaultApi.getPassword(account)
   const consentTransaction = await consent2lifeUtils.consent(
-    LIFEBANCKCODE_CONTRACT,
+    LIFEBANKCODE_CONTRACT,
     account,
     password
   )
@@ -161,17 +223,32 @@ const grantConsent = async account => {
   return consentTransaction
 }
 
+const verifyEmail = async ({ code }) => {
+  const resUser = await userApi.verifyEmail({
+    verification_code: { _eq: code }
+  })
+  const resLifebank = await preRegLifebank.verifyEmail({
+    verification_code: { _eq: code }
+  })
+  let result = false
+
+  if (
+    resUser.update_user.affected_rows !== 0 ||
+    resLifebank.update_preregister_lifebank.affected_rows !== 0
+  )
+    result = true
+
+  return {
+    is_verified: result
+  }
+}
+
 const login = async ({ account, secret }) => {
   const user = await userApi.getOne({
-    _and: [
-      {
-        _or: [
-          { account: { _eq: account } },
-          { username: { _eq: account } },
-          { email: { _eq: account } }
-        ]
-      },
-      { secret: { _eq: secret } }
+    _or: [
+      { account: { _eq: account } },
+      { username: { _eq: account } },
+      { email: { _eq: account } }
     ]
   })
 
@@ -193,7 +270,7 @@ const login = async ({ account, secret }) => {
 const revokeConsent = async account => {
   const password = await vaultApi.getPassword(account)
   const consentTransaction = await consent2lifeUtils.revoke(
-    LIFEBANCKCODE_CONTRACT,
+    LIFEBANKCODE_CONTRACT,
     account,
     password
   )
@@ -246,5 +323,7 @@ module.exports = {
   login,
   grantConsent,
   revokeConsent,
-  transfer
+  transfer,
+  verifyEmail,
+  getValidSponsors
 }

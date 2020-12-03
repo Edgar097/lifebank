@@ -5,6 +5,9 @@ import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
 import Link from '@material-ui/core/Link'
 import Divider from '@material-ui/core/Divider'
+import { useTranslation } from 'react-i18next'
+
+import { eosConfig } from '../../config'
 
 const useStyles = makeStyles((theme) => ({
   wrapper: {
@@ -33,15 +36,16 @@ const useStyles = makeStyles((theme) => ({
 const SignupAccount = ({
   data: { transaction_id: transactionId, account } = {}
 }) => {
+  const { t } = useTranslation('translations')
   const classes = useStyles()
 
   return (
     <Box className={classes.boxInfo}>
       <Box className={classes.rowBox}>
-        <Typography variant="h6">Account</Typography>
+        <Typography variant="h6">{t('common.account')}</Typography>
         <Typography variant="body1">
           <Link
-            href={`https://jungle.bloks.io/account/${account}`}
+            href={`${eosConfig.BLOCK_EXPLORER_URL}account/${account}`}
             target="_blank"
             rel="noopener"
             color="secondary"
@@ -53,10 +57,10 @@ const SignupAccount = ({
       <Divider className={classes.divider} />
 
       <Box className={classes.rowBox}>
-        <Typography variant="h6">Transaction Id</Typography>
+        <Typography variant="h6">{t('signup.transactionId')}</Typography>
         <Typography variant="body1">
           <Link
-            href={`https://jungle.bloks.io/transaction/${transactionId}`}
+            href={`${eosConfig.BLOCK_EXPLORER_URL}transaction/${transactionId}`}
             target="_blank"
             rel="noopener"
             color="secondary"
