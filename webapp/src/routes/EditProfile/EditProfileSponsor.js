@@ -32,7 +32,7 @@ import styles from './styles'
 const useStyles = makeStyles(styles)
 
 const {
-  LOCATION_TYPES: { SPONSOR },
+  LOCATION_TYPES: { SPONSOR, PENDING_SPONSOR },
   SPONSOR_TYPES
 } = constants
 
@@ -55,13 +55,11 @@ const EditProfileSponsor = ({ profile, isCompleting, onSubmit, loading }) => {
     about: profile.about,
     address: profile.address,
     website: profile.website,
-    benefit_description: profile.benefit_description,
     telephones:
       profile.telephones && profile.telephones !== '[]'
         ? JSON.parse(profile.telephones)
         : [],
     business_type: profile.business_type,
-    covid_impact: profile.covid_impact,
     geolocation: profile.location ? JSON.parse(profile.location) : null,
     schedule: profile.schedule,
     photos:
@@ -170,7 +168,7 @@ const EditProfileSponsor = ({ profile, isCompleting, onSubmit, loading }) => {
 
   return (
     <form autoComplete="off" className={classes.form}>
-      <Box className={classes.textFieldWrapper}>
+      <Box className={classes.textFieldWrapperSponsor}>
         <Box style={{ display: showOrHide(profile.logo_url) }} width="100%">
           <LogoUrlInput handleSetField={handleSetField} logo={user.logo_url} role="sponsor" />
         </Box>
@@ -209,7 +207,7 @@ const EditProfileSponsor = ({ profile, isCompleting, onSubmit, loading }) => {
           variant="outlined"
           className={classes.textField}
         >
-          <InputLabel id="bussines-type-label">Type</InputLabel>
+          <InputLabel id="bussines-type-label">{t('signup.type')}</InputLabel>
           <Select
             labelId="bussines-type-label"
             id="bussines-type"
@@ -217,11 +215,11 @@ const EditProfileSponsor = ({ profile, isCompleting, onSubmit, loading }) => {
             onChange={(event) =>
               handleSetField('business_type', event.target.value)
             }
-            label="Type"
+            label={t('signup.type')}
           >
             {SPONSOR_TYPES.map((option) => (
               <MenuItem key={`bussines-type-option-${option}`} value={option}>
-                {option}
+                {t(`sponsorTypes.${option}`)}
               </MenuItem>
             ))}
           </Select>
@@ -255,43 +253,6 @@ const EditProfileSponsor = ({ profile, isCompleting, onSubmit, loading }) => {
           className={classes.textField}
           fullWidth
           onChange={(event) => handleSetField('about', event.target.value)}
-        />
-
-        <TextField
-          id="covidImpact"
-          style={{ display: showOrHide(profile.covid_impact) }}
-          label={t('editProfile.covidImpact')}
-          variant="outlined"
-          placeholder={t('editProfile.covidImpactPlaceholder')}
-          defaultValue={user.covid_impact}
-          InputLabelProps={{
-            shrink: true
-          }}
-          className={classes.textField}
-          multiline
-          fullWidth
-          rowsMax={10}
-          onChange={(event) =>
-            handleSetField('covid_impact', event.target.value)
-          }
-        />
-        <TextField
-          id="benefitDescription"
-          style={{ display: showOrHide(profile.benefit_description) }}
-          label={t('profile.benefitDescription')}
-          variant="outlined"
-          placeholder=""
-          defaultValue={user.benefit_description}
-          InputLabelProps={{
-            shrink: true
-          }}
-          className={classes.textField}
-          multiline
-          fullWidth
-          rowsMax={10}
-          onChange={(event) =>
-            handleSetField('benefit_description', event.target.value)
-          }
         />
         <Box
           width="100%"
@@ -518,12 +479,8 @@ const EditProfileSponsor = ({ profile, isCompleting, onSubmit, loading }) => {
             <Typography className={classes.boldText} variant="subtitle1">{t('miscellaneous.location')}</Typography>
             <MapEditLocation
               onGeolocationChange={handleOnGeolocationChange}
-              markerType={SPONSOR}
-              markerLocation={
-                user.geolocation
-                  ? user.geolocation
-                  : { longitude: -84.0556371, latitude: 9.9195872 }
-              }
+              markerType={user.geolocation ? SPONSOR : PENDING_SPONSOR}
+              markerLocation={user.geolocation}
               width="100%"
               height={400}
               mb={1}

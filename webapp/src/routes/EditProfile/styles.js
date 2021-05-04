@@ -2,14 +2,14 @@ export default (theme) => ({
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
-    width: '100%',
+    width: '994px',
     padding: theme.spacing(6, 1, 0, 1),
     alignItems: 'center',
     minHeight: 'calc(100vh - 60px)',
     paddingTop: '60px',
     [theme.breakpoints.up('md')]: {
-      paddingLeft: '35%',
-      paddingRight: '35%',
+      paddingLeft: '5%',
+      paddingRight: '5%',
     },
   },
   title: {
@@ -44,7 +44,6 @@ export default (theme) => ({
   },
   form: {
     width: '100%',
-    padding: theme.spacing(0, 2)
   },
   textFieldWrapper: {
     height: '100%',
@@ -54,6 +53,15 @@ export default (theme) => ({
     alignItems: 'center',
     '& .MuiTextField-root': {
       marginBottom: theme.spacing(2)
+    }
+  },
+  textFieldWrapperSponsor: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    '& > div.MuiFormControl-root': {
+      width: '100%'
     }
   },
   btnWrapper: {
@@ -174,6 +182,12 @@ export default (theme) => ({
     [theme.breakpoints.down('md')]: {
       width: "100%",
     },
+  },
+  rightBox: {
+    paddingLeft: '8px'
+  },
+  leftBox: {
+    paddingRight: '8px'
   },
   cancelBtn: {
     borderRadius: '50px',
